@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - EduPortal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .sidebar-item {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-item.active {
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-weight: 600;
+            border-right: 3px solid #2563eb;
+        }
+
+        .quick-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .quick-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="text-slate-800 bg-slate-50 antialiased min-h-screen flex flex-col">
+
+    <!-- LOGIN SCREEN OVERLAY (Shown when logged out) -->
+    <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-slate-100 relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-xl pointer-events-none"></div>
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto shadow-lg shadow-blue-500/30 mb-3">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Student Portal Login</h2>
+                <p class="text-xs text-slate-500 mt-1">Access your academic records & campus services</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Student ID / Roll No</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-id-card absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                        <input type="text" id="loginRoll" value="2022BCA084" required class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                        <input type="password" id="loginPassword" value="••••••••" required class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <label class="flex items-center text-slate-600 cursor-pointer">
+                        <input type="checkbox" checked class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 mr-2">
+                        Remember Me
+                    </label>
+                    <a href="#" onclick="showToast('Password reset link sent to registered email.'); return false;" class="text-blue-600 font-semibold hover:underline">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition duration-200 mt-2">
+                    Sign In to Portal
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-xs text-slate-400">
+                Need Help? Contact <a href="#" class="text-slate-600 underline">IT Support Desk</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="flex-1 flex flex-col lg:flex-row min-h-screen">
+
+        <!-- MOBILE HEADER NAV -->
+        <div class="lg:hidden glass-header border-b border-slate-200/80 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
+            <div class="flex items-center space-x-3">
+                <button id="mobileMenuBtn" class="text-slate-600 p-2 rounded-xl hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight text-slate-800">EduPortal</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleNotificationsModal()" class="relative p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                    <i class="fa-regular fa-bell text-lg"></i>
+                    <span class="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full"></span>
+                </button>
+                <img id="mobileHeaderAvatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%23fdba74'/><path d='M25 88 C25 65 35 55 50 55 C65 55 75 65 75 88 Z' fill='%232563eb'/><path d='M30 32 Q50 10 70 32 Q62 20 50 20 Q38 20 30 32' fill='%231e293b'/><path d='M38 48 Q50 55 62 48' stroke='%23334155' stroke-width='2' fill='none'/></svg>" alt="Ankit Kumar Avatar" class="w-8 h-8 rounded-full border border-blue-400 object-cover cursor-pointer user-avatar-img" onclick="switchTab('profile')">
+            </div>
+        </div>
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between shrink-0 shadow-sm">
+            <div class="p-5 flex flex-col h-full overflow-y-auto">
+                <!-- Branding Header -->
+                <div class="hidden lg:flex items-center space-x-3 mb-6 px-2">
+                    <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-200">
+                        <i class="fa-solid fa-graduation-cap text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-tight text-slate-800 block leading-tight">EduPortal</span>
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Student Portal</span>
+                    </div>
+                </div>
+
+                <!-- Navigation List -->
+                <nav class="space-y-1" id="navContainer">
+                    <button onclick="switchTab('dashboard')" class="sidebar-item active w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-house w-5 text-center text-sm"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('results')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-square-poll-vertical w-5 text-center text-sm"></i>
+                        <span>Results</span>
+                    </button>
+                    <button onclick="switchTab('attendance')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-calendar-check w-5 text-center text-sm"></i>
+                        <span>Attendance</span>
+                    </button>
+                    <button onclick="switchTab('assignment')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-file-arrow-up w-5 text-center text-sm"></i>
+                        <span>Assignment</span>
+                    </button>
+                    <button onclick="switchTab('notes')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-book-open w-5 text-center text-sm"></i>
+                        <span>Notes</span>
+                    </button>
+                    <button onclick="switchTab('datesheet')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-clock w-5 text-center text-sm"></i>
+                        <span>Date Sheet & Timetable</span>
+                    </button>
+                    <button onclick="switchTab('examreg')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-pen-nib w-5 text-center text-sm"></i>
+                        <span>Exam Registration</span>
+                    </button>
+                    <button onclick="switchTab('fees')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-wallet w-5 text-center text-sm"></i>
+                        <span>Fees</span>
+                    </button>
+                    <button onclick="switchTab('library')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-book-bookmark w-5 text-center text-sm"></i>
+                        <span>Library</span>
+                    </button>
+                    <button onclick="switchTab('correction')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-sliders w-5 text-center text-sm"></i>
+                        <span>Correction Window</span>
+                    </button>
+                    <button onclick="switchTab('notice')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-bullhorn w-5 text-center text-sm"></i>
+                        <span>Notice Board</span>
+                    </button>
+                    <button onclick="switchTab('feedback')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-regular fa-comment-dots w-5 text-center text-sm"></i>
+                        <span>Feedback</span>
+                    </button>
+                    <button onclick="switchTab('antiragging')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-solid fa-shield-halved w-5 text-center text-sm text-red-500"></i>
+                        <span class="text-red-600 font-semibold">Anti-Ragging</span>
+                    </button>
+                    <button onclick="switchTab('profile')" class="sidebar-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 text-xs font-medium">
+                        <i class="fa-regular fa-user w-5 text-center text-sm"></i>
+                        <span>Profile</span>
+                    </button>
+                </nav>
+
+                <div class="pt-4 mt-auto border-t border-slate-100">
+                    <button onclick="handleLogout()" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-red-600 hover:bg-red-50 text-xs font-medium transition">
+                        <i class="fa-solid fa-right-from-bracket w-5 text-center text-sm"></i>
+                        <span>Log Out</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 hidden lg:hidden"></div>
+
+        <!-- MAIN CONTENT CONTAINER -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+
+            <!-- TOP BANNER HEADER (Design Inspired by User Reference) -->
+            <div class="p-4 sm:p-6 pb-0">
+                <div class="relative bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-blue-500/10 overflow-hidden">
+                    <!-- Subtle Graphic Elements -->
+                    <div class="absolute -right-8 -bottom-8 w-60 h-60 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                    <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+                        <!-- Student Avatar & Primary Details -->
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5">
+                            <div class="relative group">
+                                <img id="bannerAvatar" 
+                                     src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%23fdba74'/><path d='M25 88 C25 65 35 55 50 55 C65 55 75 65 75 88 Z' fill='%232563eb'/><path d='M30 32 Q50 10 70 32 Q62 20 50 20 Q38 20 30 32' fill='%231e293b'/><path d='M38 48 Q50 55 62 48' stroke='%23334155' stroke-width='2' fill='none'/></svg>" 
+                                     alt="Ankit Kumar Avatar" 
+                                     class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/90 shadow-lg object-cover user-avatar-img">
+                                <button onclick="triggerPhotoUpload()" class="absolute bottom-0 right-0 bg-white text-blue-600 p-2.5 rounded-full shadow-lg hover:bg-blue-50 transition transform hover:scale-110" title="Upload Custom Photo">
+                                    <i class="fa-solid fa-camera text-xs"></i>
+                                </button>
+                                <!-- Hidden File Input for Avatar Upload -->
+                                <input type="file" id="profilePhotoInput" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+                            </div>
+
+                            <div class="mt-1">
+                                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="headerStudentName">ANKIT KUMAR</h1>
+                                <div class="mt-2 inline-block bg-amber-400 text-slate-900 font-bold text-xs sm:text-sm px-4 py-1.5 rounded-full shadow-sm">
+                                    BCA (Bachelor of Computer Applications) - 5th Semester
+                                </div>
+                                <div class="mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-blue-100 font-medium">
+                                    <span><i class="fa-solid fa-id-card mr-1.5 opacity-80"></i>Roll No: 2022BCA084</span>
+                                    <span><i class="fa-solid fa-building-columns mr-1.5 opacity-80"></i>School of Computer Applications</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Right Controls (Desktop) -->
+                        <div class="hidden md:flex items-center space-x-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/20 shadow-inner">
+                            <button onclick="toggleNotificationsModal()" class="relative p-2 text-white hover:bg-white/10 rounded-xl transition" title="Notifications">
+                                <i class="fa-regular fa-bell text-xl"></i>
+                                <span class="absolute top-1.5 right-1.5 h-2.5 w-2.5 bg-amber-400 rounded-full ring-2 ring-blue-600"></span>
+                            </button>
+                            <div class="h-6 w-px bg-white/20"></div>
+                            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('profile')">
+                                <span class="text-xs font-semibold text-right">
+                                    <span class="block">Ankit Kumar</span>
+                                    <span class="text-[10px] text-blue-200">2022BCA084</span>
+                                </span>
+                                <img id="desktopHeaderAvatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%23fdba74'/><path d='M25 88 C25 65 35 55 50 55 C65 55 75 65 75 88 Z' fill='%232563eb'/><path d='M30 32 Q50 10 70 32 Q62 20 50 20 Q38 20 30 32' fill='%231e293b'/><path d='M38 48 Q50 55 62 48' stroke='%23334155' stroke-width='2' fill='none'/></svg>" class="w-8 h-8 rounded-full border border-white/60 object-cover user-avatar-img" alt="Ankit Kumar">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW SWITCHER BODY -->
+            <div id="contentArea" class="p-4 sm:p-6 space-y-6">
+
+                <!-- 1. DASHBOARD VIEW (Matching Provided Design Layout) -->
+                <div id="dashboardView" class="space-y-6">
+                    
+                    <!-- Quick Features & Performance Chart Layout Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                        <!-- Left Column: Quick Features Grid (7 Cols on LG) -->
+                        <div class="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                            <div class="flex items-center justify-between mb-5">
+                                <h2 class="text-base font-bold text-slate-800">Quick Features</h2>
+                                <span class="text-xs text-slate-400">Shortcut Services</span>
+                            </div>
+
+                            <!-- 10 Feature Card Grid -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                                
+                                <!-- Result Check -->
+                                <div onclick="switchTab('results')" class="quick-card bg-sky-50/70 border border-sky-100 hover:border-sky-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-sky-600 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-file-invoice"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-sky-600 transition">Result Check</span>
+                                </div>
+
+                                <!-- Assignment Upload -->
+                                <div onclick="switchTab('assignment')" class="quick-card bg-purple-50/70 border border-purple-100 hover:border-purple-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-purple-600 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-purple-600 transition">Assignment Upload</span>
+                                </div>
+
+                                <!-- Notes -->
+                                <div onclick="switchTab('notes')" class="quick-card bg-amber-50/70 border border-amber-100 hover:border-amber-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-amber-600 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-book-open"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-amber-600 transition">Notes</span>
+                                </div>
+
+                                <!-- Exam Registration -->
+                                <div onclick="switchTab('examreg')" class="quick-card bg-pink-50/70 border border-pink-100 hover:border-pink-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-pink-500 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-pen-nib"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-pink-600 transition">Exam Registration</span>
+                                </div>
+
+                                <!-- Notice -->
+                                <div onclick="switchTab('notice')" class="quick-card bg-orange-50/70 border border-orange-100 hover:border-orange-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-orange-500 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-orange-600 transition">Notice</span>
+                                </div>
+
+                                <!-- Profile -->
+                                <div onclick="switchTab('profile')" class="quick-card bg-teal-50/70 border border-teal-100 hover:border-teal-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-teal-600 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-regular fa-user"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-teal-600 transition">Profile</span>
+                                </div>
+
+                                <!-- Fees -->
+                                <div onclick="switchTab('fees')" class="quick-card bg-emerald-50/70 border border-emerald-100 hover:border-emerald-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-emerald-600 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-wallet"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-emerald-600 transition">Fees</span>
+                                </div>
+
+                                <!-- Feedback -->
+                                <div onclick="switchTab('feedback')" class="quick-card bg-indigo-50/70 border border-indigo-100 hover:border-indigo-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-indigo-500 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-regular fa-comment-dots"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-indigo-600 transition">Feedback</span>
+                                </div>
+
+                                <!-- Anti-Ragging -->
+                                <div onclick="switchTab('antiragging')" class="quick-card bg-red-50/70 border border-red-100 hover:border-red-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group">
+                                    <div class="w-11 h-11 rounded-2xl bg-white text-red-500 flex items-center justify-center text-lg shadow-sm mb-2.5 group-hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-700 group-hover:text-red-600 transition">Anti-Ragging</span>
+                                </div>
+
+                                <!-- Correction Window -->
+                                <div onclick="switchTab('correction')" class="quick-card bg-slate-100/80 border border-slate-200 hover:border-slate-300 p-4 rounded-2xl cursor-pointer flex flex-col items-center text-center group col-span-2 sm:col-span-3">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-8 h-8 rounded-xl bg-white text-slate-600 flex items-center justify-center text-sm shadow-sm">
+                                            <i class="fa-solid fa-sliders"></i>
+                                        </div>
+                                        <span class="text-xs font-semibold text-slate-700 group-hover:text-blue-600 transition">Correction Window Open for 5th Semester Data</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Performance Chart (5 Cols on LG) -->
+                        <div class="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <h2 class="text-base font-bold text-slate-800">Performance Chart</h2>
+                                    <span class="text-[11px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg font-medium">Academic Year 2026</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mb-4">Monthly attendance & assignment trajectory</p>
+                            </div>
+                            
+                            <div class="relative w-full h-56 sm:h-64 my-auto">
+                                <canvas id="performanceChart"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Bottom Section: Recent Student Updates Table -->
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="flex items-center justify-between mb-5">
+                            <div>
+                                <h2 class="text-base font-bold text-slate-800">Recent Student Updates</h2>
+                                <p class="text-xs text-slate-400 mt-0.5">Activities & submission records across department</p>
+                            </div>
+                            <button onclick="showToast('Loading full activity log...')" class="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                                View All
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                        <th class="pb-3 px-2">Name</th>
+                                        <th class="pb-3 px-2">State / Grade</th>
+                                        <th class="pb-3 px-2">Status</th>
+                                        <th class="pb-3 px-2">Date</th>
+                                        <th class="pb-3 px-2 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-xs">
+                                    <tr class="hover:bg-slate-50/80 transition">
+                                        <td class="py-3 px-2 font-medium flex items-center space-x-3">
+                                            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%23fdba74'/><path d='M25 88 C25 65 35 55 50 55 C65 55 75 65 75 88 Z' fill='%232563eb'/><path d='M30 32 Q50 10 70 32 Q62 20 50 20 Q38 20 30 32' fill='%231e293b'/><path d='M38 48 Q50 55 62 48' stroke='%23334155' stroke-width='2' fill='none'/></svg>" class="w-7 h-7 rounded-full object-cover user-avatar-img" alt="Ankit">
+                                            <span class="text-slate-800 font-semibold">ANKIT KUMAR</span>
+                                        </td>
+                                        <td class="py-3 px-2 text-slate-600">12th</td>
+                                        <td class="py-3 px-2">
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">Completed</span>
+                                        </td>
+                                        <td class="py-3 px-2 text-slate-400">2 days ago</td>
+                                        <td class="py-3 px-2 text-right">
+                                            <button onclick="showToast('Ankit Kumar submitted Web Dev Project')" class="text-slate-400 hover:text-blue-600"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/80 transition">
+                                        <td class="py-3 px-2 font-medium flex items-center space-x-3">
+                                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-7 h-7 rounded-full object-cover" alt="Anait">
+                                            <span class="text-slate-800 font-semibold">ANAIT KUMAR</span>
+                                        </td>
+                                        <td class="py-3 px-2 text-slate-600">12th</td>
+                                        <td class="py-3 px-2">
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">Pending</span>
+                                        </td>
+                                        <td class="py-3 px-2 text-slate-400">3 days ago</td>
+                                        <td class="py-3 px-2 text-right">
+                                            <button onclick="showToast('Anait Kumar requested deadline extension')" class="text-slate-400 hover:text-blue-600"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/80 transition">
+                                        <td class="py-3 px-2 font-medium flex items-center space-x-3">
+                                            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%23fdba74'/><path d='M25 88 C25 65 35 55 50 55 C65 55 75 65 75 88 Z' fill='%232563eb'/><path d='M30 32 Q50 10 70 32 Q62 20 50 20 Q38 20 30 32' fill='%231e293b'/><path d='M38 48 Q50 55 62 48' stroke='%23334155' stroke-width='2' fill='none'/></svg>" class="w-7 h-7 rounded-full object-cover user-avatar-img" alt="Ankit">
+                                            <span class="text-slate-800 font-semibold">ANKIT KUMAR</span>
+                                        </td>
+                                        <td class="py-3 px-2 text-slate-600">9th</td>
+                                        <td class="py-3 px-2">
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-800">Verified</span>
+                                        </td>
+                                        <td class="py-3 px-2 text-slate-400">3 days ago</td>
+                                        <td class="py-3 px-2 text-right">
+                                            <button onclick="showToast('Fee Receipt generated')" class="text-slate-400 hover:text-blue-600"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 2. RESULTS CHECK VIEW -->
+                <div id="resultsView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">Semester Examination Results</h2>
+                                <p class="text-xs text-slate-500">View and download grade cards across all semesters</p>
+                            </div>
+                            <button onclick="showToast('Downloading Grade Card PDF...')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition flex items-center space-x-2">
+                                <i class="fa-solid fa-file-pdf"></i>
+                                <span>Download Marksheet</span>
+                            </button>
+                        </div>
+
+                        <!-- Summary Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl">
+                                <span class="text-xs text-blue-600 font-semibold uppercase">Cumulative GPA</span>
+                                <div class="text-2xl font-bold text-blue-900 mt-1">8.75 / 10</div>
+                            </div>
+                            <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
+                                <span class="text-xs text-emerald-600 font-semibold uppercase">4th Sem SGPA</span>
+                                <div class="text-2xl font-bold text-emerald-900 mt-1">8.90</div>
+                            </div>
+                            <div class="bg-purple-50 border border-purple-100 p-4 rounded-2xl">
+                                <span class="text-xs text-purple-600 font-semibold uppercase">Overall Grade</span>
+                                <div class="text-2xl font-bold text-purple-900 mt-1">A+ (Distinction)</div>
+                            </div>
+                        </div>
+
+                        <!-- Semester Filter -->
+                        <div class="flex items-center space-x-3 mb-4">
+                            <label class="text-xs font-semibold text-slate-600">Select Semester:</label>
+                            <select onchange="showToast('Displaying results for ' + this.value)" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500">
+                                <option value="Semester 4">Semester 4 (Latest)</option>
+                                <option value="Semester 3">Semester 3</option>
+                                <option value="Semester 2">Semester 2</option>
+                                <option value="Semester 1">Semester 1</option>
+                            </select>
+                        </div>
+
+                        <!-- Subject Wise Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-xs font-semibold text-slate-400 uppercase">
+                                        <th class="py-3 px-2">Subject Code</th>
+                                        <th class="py-3 px-2">Subject Title</th>
+                                        <th class="py-3 px-2">Credits</th>
+                                        <th class="py-3 px-2">Internal (40)</th>
+                                        <th class="py-3 px-2">External (60)</th>
+                                        <th class="py-3 px-2">Grade</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-xs">
+                                    <tr>
+                                        <td class="py-3 px-2 font-mono font-semibold">BCA-501</td>
+                                        <td class="py-3 px-2 font-semibold text-slate-800">Web Technologies & Frameworks</td>
+                                        <td class="py-3 px-2">4</td>
+                                        <td class="py-3 px-2">38</td>
+                                        <td class="py-3 px-2">54</td>
+                                        <td class="py-3 px-2 font-bold text-emerald-600">A+</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-2 font-mono font-semibold">BCA-502</td>
+                                        <td class="py-3 px-2 font-semibold text-slate-800">Python Data Analytics</td>
+                                        <td class="py-3 px-2">4</td>
+                                        <td class="py-3 px-2">35</td>
+                                        <td class="py-3 px-2">51</td>
+                                        <td class="py-3 px-2 font-bold text-emerald-600">A</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-2 font-mono font-semibold">BCA-503</td>
+                                        <td class="py-3 px-2 font-semibold text-slate-800">Software Engineering Principles</td>
+                                        <td class="py-3 px-2">3</td>
+                                        <td class="py-3 px-2">36</td>
+                                        <td class="py-3 px-2">49</td>
+                                        <td class="py-3 px-2 font-bold text-emerald-600">A</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ATTENDANCE CHECK VIEW -->
+                <div id="attendanceView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">Attendance Tracker</h2>
+                                <p class="text-xs text-slate-500">Minimum 75% required for examination eligibility</p>
+                            </div>
+                            <div class="flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-4 py-2 rounded-2xl">
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                                <span class="text-sm font-bold">Overall: 88.5% (Eligible)</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Subject Attendance Progress Bars -->
+                            <div class="space-y-4">
+                                <h3 class="font-bold text-sm text-slate-700">Subject Breakdown</h3>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1 font-medium">
+                                        <span>Web Technologies Lab</span>
+                                        <span class="text-emerald-600 font-bold">92% (23/25 Classes)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2">
+                                        <div class="bg-emerald-500 h-2 rounded-full" style="width: 92%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1 font-medium">
+                                        <span>Python Programming</span>
+                                        <span class="text-blue-600 font-bold">85% (17/20 Classes)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1 font-medium">
+                                        <span>Software Engineering</span>
+                                        <span class="text-amber-600 font-bold">78% (14/18 Classes)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2">
+                                        <div class="bg-amber-500 h-2 rounded-full" style="width: 78%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Calendar Visual Widget -->
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                <h3 class="font-bold text-xs text-slate-700 mb-3 flex items-center justify-between">
+                                    <span>Attendance Log (Current Month)</span>
+                                    <span class="text-blue-600">September 2026</span>
+                                </h3>
+                                <div class="grid grid-cols-7 gap-1.5 text-center text-[10px] font-semibold text-slate-500">
+                                    <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                                    <!-- Days Mock -->
+                                    <span class="p-1.5 bg-emerald-100 text-emerald-800 rounded-md">1</span>
+                                    <span class="p-1.5 bg-emerald-100 text-emerald-800 rounded-md">2</span>
+                                    <span class="p-1.5 bg-red-100 text-red-800 rounded-md">3</span>
+                                    <span class="p-1.5 bg-emerald-100 text-emerald-800 rounded-md">4</span>
+                                    <span class="p-1.5 bg-emerald-100 text-emerald-800 rounded-md">5</span>
+                                    <span class="p-1.5 bg-slate-200 text-slate-500 rounded-md">6</span>
+                                    <span class="p-1.5 bg-slate-200 text-slate-500 rounded-md">7</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. ASSIGNMENT UPLOAD VIEW -->
+                <div id="assignmentView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <h2 class="text-xl font-bold text-slate-800 mb-2">Assignment Submission Portal</h2>
+                        <p class="text-xs text-slate-500 mb-6">Upload completed assignments prior to strict deadlines</p>
+
+                        <!-- Drag and Drop Box -->
+                        <div class="border-2 border-dashed border-blue-200 hover:border-blue-500 bg-blue-50/50 rounded-2xl p-8 text-center cursor-pointer transition mb-6" onclick="document.getElementById('fileUploadInput').click()">
+                            <input type="file" id="fileUploadInput" class="hidden" onchange="showToast('File attached: ' + this.files[0]?.name)">
+                            <div class="w-12 h-12 bg-white text-blue-600 rounded-full flex items-center justify-center text-xl shadow-md mx-auto mb-3">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-700">Click or Drag & Drop assignment file here</p>
+                            <p class="text-xs text-slate-400 mt-1">Supports PDF, DOCX, ZIP (Max size: 25MB)</p>
+                        </div>
+
+                        <!-- Pending Assignments List -->
+                        <h3 class="font-bold text-sm text-slate-800 mb-3">Active Assignments</h3>
+                        <div class="space-y-3">
+                            <div class="p-4 border border-slate-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div>
+                                    <span class="px-2 py-0.5 bg-purple-100 text-purple-800 font-semibold text-[10px] rounded-md">Web Technologies</span>
+                                    <h4 class="font-bold text-sm text-slate-800 mt-1">Single Page React Web Dashboard</h4>
+                                    <p class="text-xs text-slate-400">Deadline: Oct 05, 2026 • Status: <span class="text-amber-600 font-semibold">Pending</span></p>
+                                </div>
+                                <button onclick="showToast('Select file above to submit assignment.')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition">
+                                    Submit File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. NOTES VIEW -->
+                <div id="notesView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">Study Notes & Resources</h2>
+                                <p class="text-xs text-slate-500">Download syllabus material uploaded by faculty</p>
+                            </div>
+                            <input type="text" placeholder="Search notes..." class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500 w-full sm:w-64">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="p-4 border border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col justify-between">
+                                <div>
+                                    <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs mb-2">PDF</div>
+                                    <h4 class="font-bold text-sm text-slate-800">React JS Hooks Guide</h4>
+                                    <p class="text-xs text-slate-500 mt-1">Uploaded by Prof. Sharma</p>
+                                </div>
+                                <button onclick="showToast('Downloading React JS Hooks Guide.pdf')" class="mt-4 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-blue-600 hover:bg-blue-50 transition text-center">
+                                    Download (2.4 MB)
+                                </button>
+                            </div>
+                            <div class="p-4 border border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col justify-between">
+                                <div>
+                                    <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs mb-2">PDF</div>
+                                    <h4 class="font-bold text-sm text-slate-800">Python Pandas & Numpy Reference</h4>
+                                    <p class="text-xs text-slate-500 mt-1">Uploaded by Dr. V. Verma</p>
+                                </div>
+                                <button onclick="showToast('Downloading Python Reference.pdf')" class="mt-4 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-blue-600 hover:bg-blue-50 transition text-center">
+                                    Download (5.1 MB)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. DATE SHEET & TIME TABLE VIEW -->
+                <div id="datesheetView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <div class="flex space-x-4 border-b border-slate-200 pb-3 mb-6">
+                            <button onclick="toggleScheduleTab('timetable')" id="tabBtnTimetable" class="text-sm font-bold text-blue-600 border-b-2 border-blue-600 pb-2">Class Timetable</button>
+                            <button onclick="toggleScheduleTab('datesheet')" id="tabBtnDatesheet" class="text-sm font-bold text-slate-400 hover:text-slate-600 pb-2">Exam Date Sheet</button>
+                        </div>
+
+                        <!-- Timetable -->
+                        <div id="scheduleTimetableContent" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                                    <span class="text-xs font-bold text-blue-600">MONDAY • 09:00 AM</span>
+                                    <h4 class="font-bold text-slate-800 mt-1">Web Development Lab</h4>
+                                    <p class="text-xs text-slate-500">Lab 302 • Prof. Sharma</p>
+                                </div>
+                                <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                                    <span class="text-xs font-bold text-blue-600">TUESDAY • 11:30 AM</span>
+                                    <h4 class="font-bold text-slate-800 mt-1">Python Programming</h4>
+                                    <p class="text-xs text-slate-500">Hall B • Dr. Verma</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date Sheet -->
+                        <div id="scheduleDatesheetContent" class="hidden space-y-3">
+                            <div class="p-4 border border-slate-200 rounded-2xl flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs text-red-600 font-bold">18th NOV 2026 (10:00 AM)</span>
+                                    <h4 class="font-bold text-sm text-slate-800">Web Technologies & Frameworks (BCA-501)</h4>
+                                </div>
+                                <span class="px-3 py-1 bg-slate-100 text-slate-700 text-xs rounded-lg font-medium">Hall 1A</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. EXAM REGISTRATION VIEW -->
+                <div id="examregView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <h2 class="text-xl font-bold text-slate-800 mb-1">End Semester Examination Registration</h2>
+                        <p class="text-xs text-slate-500 mb-6">Select mandatory courses and complete payment before registration close date</p>
+
+                        <form onsubmit="handleExamRegister(event)" class="space-y-4 max-w-xl">
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                    <input type="checkbox" checked disabled class="rounded text-blue-600">
+                                    <span class="text-xs font-semibold text-slate-700">BCA-501 Web Technologies (Core)</span>
+                                </label>
+                                <label class="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                    <input type="checkbox" checked disabled class="rounded text-blue-600">
+                                    <span class="text-xs font-semibold text-slate-700">BCA-502 Python Data Analytics (Core)</span>
+                                </label>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                                <span class="text-xs text-slate-500">Registration Fee: <strong class="text-slate-800">₹ 1,200</strong></span>
+                                <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-md transition">
+                                    Submit Exam Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 8. FEES VIEW -->
+                <div id="feesView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <h2 class="text-xl font-bold text-slate-800 mb-4">Tuition & Campus Fee Portal</h2>
+                        
+                        <div class="p-5 bg-emerald-50 border border-emerald-200 rounded-2xl mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">5th Semester Semester Fee</span>
+                                <div class="text-2xl font-extrabold text-emerald-900 mt-1">₹ 42,500 - PAID</div>
+                                <p class="text-xs text-emerald-600 mt-1">Transaction Ref: TXN-9981240192</p>
+                            </div>
+                            <button onclick="showToast('Receipt PDF generated successfully!')" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition">
+                                Download Receipt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 9. LIBRARY VIEW -->
+                <div id="libraryView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <h2 class="text-xl font-bold text-slate-800 mb-4">Library Digital Catalog & Borrowings</h2>
+                        <div class="p-4 border border-slate-200 rounded-2xl flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] font-bold text-blue-600 uppercase">Currently Issued</span>
+                                <h4 class="font-bold text-sm text-slate-800 mt-0.5">Introduction to Algorithms (CLRS)</h4>
+                                <p class="text-xs text-slate-400">Due Date: Oct 12, 2026</p>
+                            </div>
+                            <button onclick="showToast('Book renewed for 14 additional days.')" class="px-3 py-1.5 border border-blue-600 text-blue-600 rounded-xl text-xs font-semibold hover:bg-blue-50 transition">
+                                Renew Book
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 10. CORRECTION WINDOW VIEW -->
+                <div id="correctionView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm max-w-xl">
+                        <h2 class="text-xl font-bold text-slate-800 mb-1">Data Correction Request</h2>
+                        <p class="text-xs text-slate-500 mb-6">Request changes to official student profile records</p>
+
+                        <form onsubmit="handleCorrectionSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Correction Field</label>
+                                <select required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500">
+                                    <option value="">Select Category</option>
+                                    <option value="name">Spelling in Student Name / Father Name</option>
+                                    <option value="dob">Date of Birth Correction</option>
+                                    <option value="address">Permanent Address Update</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Reason & Remarks</label>
+                                <textarea required rows="3" placeholder="Provide reason for requested correction..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500"></textarea>
+                            </div>
+                            <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition">
+                                Submit Correction Ticket
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 11. NOTICE VIEW -->
+                <div id="noticeView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <h2 class="text-xl font-bold text-slate-800 mb-4">Official Campus Announcements</h2>
+                        <div class="space-y-3">
+                            <div class="p-4 bg-orange-50/60 border border-orange-100 rounded-2xl">
+                                <span class="px-2 py-0.5 bg-orange-200 text-orange-800 rounded text-[10px] font-bold">URGENT</span>
+                                <h4 class="font-bold text-slate-800 mt-1 text-sm">5th Semester Exam Form Submission Extended</h4>
+                                <p class="text-xs text-slate-600 mt-1">The deadline for examination registration without late fee is extended to Nov 15.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 12. FEEDBACK VIEW -->
+                <div id="feedbackView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm max-w-xl">
+                        <h2 class="text-xl font-bold text-slate-800 mb-1">Student Feedback Form</h2>
+                        <p class="text-xs text-slate-500 mb-6">Share feedback regarding academic courses & facilities</p>
+
+                        <form onsubmit="handleFeedbackSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Rating</label>
+                                <div class="flex space-x-2 text-amber-400 text-lg cursor-pointer">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Comments</label>
+                                <textarea required rows="4" placeholder="Write feedback here..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-500"></textarea>
+                            </div>
+                            <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition">
+                                Send Feedback
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 13. ANTI-RAGGING VIEW -->
+                <div id="antiraggingView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-red-200 shadow-sm">
+                        <div class="flex items-center space-x-3 text-red-600 mb-4">
+                            <i class="fa-solid fa-shield-halved text-2xl"></i>
+                            <h2 class="text-xl font-bold text-slate-800">Zero Tolerance Anti-Ragging Cell</h2>
+                        </div>
+                        <p class="text-xs text-slate-600 mb-4">Ragging is a punishable offence. Report any incident immediately for strict action.</p>
+                        <div class="p-4 bg-red-50 border border-red-200 rounded-2xl mb-6">
+                            <span class="text-xs font-bold text-red-800">Toll-Free Emergency Helpline</span>
+                            <div class="text-xl font-extrabold text-red-900 mt-0.5">1800-180-5522</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 14. PROFILE VIEW -->
+                <div id="profileView" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+                        <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-8 pb-6 border-b border-slate-100">
+                            <div class="relative group">
+                                <img id="profileTabAvatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e293b'/><circle cx='50' cy='38' r='20' fill='%23fdba74'/><path d='M25 88 C25 65 35 55 50 55 C65 55 75 65 75 88 Z' fill='%232563eb'/><path d='M30 32 Q50 10 70 32 Q62 20 50 20 Q38 20 30 32' fill='%231e293b'/><path d='M38 48 Q50 55 62 48' stroke='%23334155' stroke-width='2' fill='none'/></svg>" alt="Ankit Kumar" class="w-24 h-24 rounded-2xl object-cover border-2 border-blue-500 shadow-md user-avatar-img">
+                                <button onclick="triggerPhotoUpload()" class="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-xl shadow-md hover:bg-blue-700 transition" title="Change Profile Picture">
+                                    <i class="fa-solid fa-camera text-xs"></i>
+                                </button>
+                            </div>
+                            <div class="text-center sm:text-left">
+                                <h2 class="text-2xl font-extrabold text-slate-800">ANKIT KUMAR</h2>
+                                <p class="text-xs text-blue-600 font-semibold mt-1">BCA - 5th Semester (Roll No: 2022BCA084)</p>
+                                <div class="flex items-center justify-center sm:justify-start gap-2 mt-2">
+                                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full">Active Student Status</span>
+                                    <button onclick="triggerPhotoUpload()" class="px-3 py-1 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-full hover:bg-blue-100 transition">
+                                        Upload Photo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 class="text-lg font-bold text-slate-800 mb-4">Student Profile Details</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                            <div class="space-y-3">
+                                <div class="p-3 bg-slate-50 rounded-xl">
+                                    <span class="text-slate-400 block font-medium">Full Name</span>
+                                    <span class="font-bold text-slate-800 text-sm">ANKIT KUMAR</span>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-xl">
+                                    <span class="text-slate-400 block font-medium">Roll Number</span>
+                                    <span class="font-bold text-slate-800 text-sm">2022BCA084</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="p-3 bg-slate-50 rounded-xl">
+                                    <span class="text-slate-400 block font-medium">Email Address</span>
+                                    <span class="font-bold text-slate-800 text-sm">ankit.kumar@student.edu</span>
+                                </div>
+                                <div class="p-3 bg-slate-50 rounded-xl">
+                                    <span class="text-slate-400 block font-medium">Phone Number</span>
+                                    <span class="font-bold text-slate-800 text-sm">+91 98765 43210</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST POPUP -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-3 text-xs">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toastText">Operation completed successfully</span>
+    </div>
+
+    <script>
+        // Init chart on startup
+        window.onload = function () {
+            initPerformanceChart();
+        };
+
+        // Render Chart.js Graph
+        function initPerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, 'rgba(37, 99, 235, 0.25)');
+            gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'May', 'Jun', 'Jul', 'Sep', 'Nov'],
+                    datasets: [{
+                        label: 'Performance Trend',
+                        data: [25, 30, 60, 25, 65, 35, 50],
+                        borderColor: '#2563eb',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#2563eb',
+                        pointBorderWidth: 3,
+                        pointRadius: 5,
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: gradient
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#94a3b8' } },
+                        y: { min: 0, max: 100, ticks: { stepSize: 25, font: { size: 10 }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } }
+                    }
+                }
+            });
+        }
+
+        // Tab Navigation Logic
+        function switchTab(tabName) {
+            const allViews = [
+                'dashboardView', 'resultsView', 'attendanceView', 'assignmentView', 
+                'notesView', 'datesheetView', 'examregView', 'feesView', 
+                'libraryView', 'correctionView', 'noticeView', 'feedbackView', 
+                'antiraggingView', 'profileView'
+            ];
+
+            allViews.forEach(viewId => {
+                const el = document.getElementById(viewId);
+                if (el) el.classList.add('hidden');
+            });
+
+            const target = document.getElementById(tabName + 'View');
+            if (target) target.classList.remove('hidden');
+
+            // Toggle active styles in sidebar
+            const items = document.querySelectorAll('.sidebar-item');
+            items.forEach(item => item.classList.remove('active'));
+            
+            event?.currentTarget?.classList?.add('active');
+
+            // Close drawer on mobile
+            closeMobileMenu();
+        }
+
+        // Mobile drawer toggles
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+
+        function closeMobileMenu() {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        }
+
+        if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileMenu);
+
+        // Simulated Login System
+        function handleLogin(e) {
+            e.preventDefault();
+            const roll = document.getElementById('loginRoll').value;
+            document.getElementById('headerStudentName').innerText = "ANKIT KUMAR";
+            document.getElementById('loginScreen').classList.add('hidden');
+            showToast("Welcome back, Ankit Kumar!");
+        }
+
+        function handleLogout() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            showToast("Logged out successfully.");
+        }
+
+        // Form Submission Handlers
+        function handleExamRegister(e) {
+            e.preventDefault();
+            showToast("Exam registration form submitted successfully!");
+        }
+
+        function handleCorrectionSubmit(e) {
+            e.preventDefault();
+            showToast("Correction request registered. Ticket #CR-9921");
+        }
+
+        function handleFeedbackSubmit(e) {
+            e.preventDefault();
+            showToast("Thank you! Your feedback has been logged.");
+        }
+
+        // Toggle Schedule Subtabs
+        function toggleScheduleTab(type) {
+            const tt = document.getElementById('scheduleTimetableContent');
+            const ds = document.getElementById('scheduleDatesheetContent');
+            const btnTt = document.getElementById('tabBtnTimetable');
+            const btnDs = document.getElementById('tabBtnDatesheet');
+
+            if (type === 'timetable') {
+                tt.classList.remove('hidden');
+                ds.classList.add('hidden');
+                btnTt.className = "text-sm font-bold text-blue-600 border-b-2 border-blue-600 pb-2";
+                btnDs.className = "text-sm font-bold text-slate-400 hover:text-slate-600 pb-2";
+            } else {
+                ds.classList.remove('hidden');
+                tt.classList.add('hidden');
+                btnDs.className = "text-sm font-bold text-blue-600 border-b-2 border-blue-600 pb-2";
+                btnTt.className = "text-sm font-bold text-slate-400 hover:text-slate-600 pb-2";
+            }
+        }
+
+        function toggleNotificationsModal() {
+            showToast("You have no new unread notifications.");
+        }
+
+        function triggerPhotoUpload() {
+            document.getElementById('profilePhotoInput').click();
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    // Update all avatar images on the page
+                    const avatars = document.querySelectorAll('.user-avatar-img');
+                    avatars.forEach(img => {
+                        img.src = imageUrl;
+                    });
+                    showToast("Profile photo updated successfully!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Helper Toast Notification
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastText').innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
